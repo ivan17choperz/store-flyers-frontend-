@@ -1,6 +1,8 @@
 <template>
-  <navbarComponent />
-  <RouterView />
+  <div class="w-full overflow-x-hidden">
+    <navbarComponent />
+    <RouterView />
+  </div>
 </template>
 
 <script setup lang="ts">
