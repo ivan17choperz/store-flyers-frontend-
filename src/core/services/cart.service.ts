@@ -1,8 +1,11 @@
-export class CartService {
-  private _products: any[] = [];
+import { IProduct } from "../Interfaces/Product.interface";
 
-  public addProductToCart(product: any) {
+export class CartService {
+  private _products: IProduct[] = [];
+
+  public addProductToCart(product: IProduct) {
     this._products.push(product);
+    console.log(this._products);
   }
 
   public removeProductFromCart(product: any) {

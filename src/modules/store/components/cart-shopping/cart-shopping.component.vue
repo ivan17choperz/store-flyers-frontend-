@@ -3,7 +3,7 @@
     class="fixed z-50 w-full h-full top-0 left-0 flex justify-center items-center"
   >
     <div
-      class="cart w-[500px] h-[500px] overflow-hidden p-5 rounded-2xl shadow-xl bg-white flex flex-col justify-between items-center"
+      class="cart w-[500px] h-[500px] overflow-hidden p-5 rounded-2xl shadow-xl border border-sky-700 bg-white flex flex-col justify-between items-center"
     >
       <div class="header-cart w-full flex items-center justify-between">
         <h2 class="text-red text-2xl font-bold text-sky-600">
@@ -17,16 +17,19 @@
         </button>
       </div>
 
-      <div class="body-cart w-full mt-5 overflow-y-auto max-h-[200px]">
+      <div class="body-cart w-full mt-5 overflow-y-auto max-h-[270px]">
         <ul class="flex flex-col items-center justify-start">
           <li
+            v-for="product in listProducts"
             class="w-full h-[130px] border rounded-lg mb-2 border-sky-600 flex items-center px-5 justify-between"
           >
             <div class="img w-2/12">
-              <img :src="'public/tratados/covers/1.jpg'" class="h-20" alt="" />
+              <img :src="product.img_url" class="h-20" alt="" />
             </div>
             <div class="info w-8/12 flex flex-col">
-              <p class="text-lg font-bold text-sky-600">Tratado de San Juan</p>
+              <p class="text-lg font-bold text-sky-600 truncate">
+                {{ product.title }}
+              </p>
               <p class="text-lg text-neutral-700">Paquete con 100 unidades</p>
 
               <input
@@ -35,10 +38,12 @@
                 min="1"
                 max="100"
                 class="border border-sky-600 rounded-lg p-2 text-sky-600"
+                v-model="product.quantity"
+                @input="(event) => updateQuantityProduct(event, product)"
               />
             </div>
             <div class="actions w-2/12 flex justify-end">
-              <button>
+              <button @click="removeProduct(product)">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="25"
@@ -69,6 +74,7 @@
           Proceder a ordenar
         </button>
         <button
+          @click="hiddenShoppingCart()"
           class="border border-sky-700 text-sky-700 rounded-xl px-5 py-2 hover:bg-sky-700 hover:text-white transition-colors"
         >
           Seguir comprando
@@ -79,13 +85,40 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits } from "vue";
+import { defineEmits, onMounted, ref } from "vue";
+import { IProduct } from "../../../../core/Interfaces/Product.interface";
+import { useCartStore } from "../../../../core/store/shoping-store/cart.store";
 
+const cartStore = useCartStore();
+const quantity = ref<number>(1);
 const emits = defineEmits<{
   (e: "hidden-cart-shopping", value: boolean): void;
 }>();
 
 const hiddenShoppingCart = () => {
   emits("hidden-cart-shopping", false);
+};
+
+const listProducts = ref<IProduct[]>([]);
+
+onMounted(() => {
+  console.log(cartStore.cartProducts, cartStore.cartTotalPrice);
+  listProducts.value = cartStore.cartProducts;
+});
+
+const removeProduct = (product: IProduct) => {
+  cartStore.removeProductFromCart(product);
+};
+
+const updateQuantityProduct = (e: Event, product: IProduct) => {
+  const inputValue = (e.target as HTMLInputElement).value;
+
+  if (inputValue === "") {
+    quantity.value = 1;
+  }
+
+  product.quantity = parseInt(inputValue);
+
+  cartStore.updateQuantityProduct(product);
 };
 </script>

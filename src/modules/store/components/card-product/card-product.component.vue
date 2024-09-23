@@ -10,12 +10,17 @@
       />
     </div>
     <div class="body-product w-full text-center">
-      <a :href="`store/product/${productCard.id_product}`" class="font-bold text-lg text-sky-700">{{ productCard.title }}</a>
+      <a
+        :href="`store/product/${productCard.id_product}`"
+        class="font-bold text-lg text-sky-700"
+        >{{ productCard.title }}</a
+      >
       <p>{{ productCard.description }}</p>
     </div>
     <div class="footer-product flex justify-between items-center w-full mt-5">
       <p class="font-bold">${{ productCard.price }}</p>
       <button
+        @click="addProductToCart(productCard)"
         class="border border-sky-700 text-sky-700 rounded-xl px-5 py-2 hover:bg-sky-700 hover:text-white transition-colors"
       >
         Añadir al carrito
@@ -23,7 +28,10 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
+import { useCartStore } from "../../../../core/store/shoping-store/cart.store";
+
 const props = defineProps({
   product: {
     type: Object,
@@ -39,5 +47,13 @@ const productCard = {
   price: props.product.price,
 };
 
+const cartStore = useCartStore();
 
+const addProductToCart = (product: any) => {
+  const newProduct = {
+    ...product,
+    quantity: 1,
+  };
+  cartStore.addProductToCart(newProduct);
+};
 </script>
