@@ -25,7 +25,10 @@ export const useCartStore = defineStore("cart", {
       const productInCart = this.products.find(
         (p) => p.id_product === product.id_product
       );
-      console.log(productInCart);
+
+      if (productInCart) {
+        productInCart.quantity = product.quantity;
+      }
     },
     clearCart() {
       this.products = [];

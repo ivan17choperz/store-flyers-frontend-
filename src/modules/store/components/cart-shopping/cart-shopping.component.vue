@@ -1,9 +1,9 @@
 <template>
   <div
-    class="fixed z-50 w-full h-full top-0 left-0 flex justify-center items-center"
+    class="fixed z-50 w-11/12 lg:w-full h-full top-0 left-0 flex justify-center items-center"
   >
     <div
-      class="cart w-[500px] h-[500px] overflow-hidden p-5 rounded-2xl shadow-xl border border-sky-700 bg-white flex flex-col justify-between items-center"
+      class="cart overflow-y-auto w-[500px] h-[650px] overflow-hidden p-5 rounded-2xl shadow-xl border border-sky-700 bg-white flex flex-col justify-between items-center"
     >
       <div class="header-cart w-full flex items-center justify-between">
         <h2 class="text-red text-2xl font-bold text-sky-600">
@@ -62,13 +62,35 @@
               </button>
             </div>
           </li>
+
+          <p
+            class="text-center text-slate-400 text-2xl"
+            v-if="listProducts.length === 0"
+          >
+            No hay productos
+          </p>
         </ul>
       </div>
 
       <div
+        class="border-t border-sky-600 w-full flex flex-col justify-center items-start pt-5"
+      >
+        <p class="text-lg font-bold text-sky-600">
+          Total por productos: {{ pipeCurrency(cartStore.cartTotalPrice) }}
+        </p>
+        <p class="text-lg font-bold text-sky-600">
+          Envio: {{ pipeCurrency(10000) }}
+        </p>
+        <p class="text-lg font-bold text-sky-600">
+          Total: {{ pipeCurrency(cartStore.cartTotalPrice + 10000) }}
+        </p>
+      </div>
+      <!-- 
+      <div
         class="footer-cart border-t border-sky-600 w-full flex justify-between items-center pt-5"
       >
         <button
+          :disabled="cartStore.cartProducts.length === 0"
           class="border bg-sky-600 text-white rounded-xl px-5 py-2 hover:bg-sky-800 font-bold transition-colors"
         >
           Proceder a ordenar
@@ -79,32 +101,101 @@
         >
           Seguir comprando
         </button>
+      </div> -->
+
+      <div class="">
+        <!-- <form
+          action="https://www.paypal.com/ncp/payment/GUEDM9BNX6DXU"
+          method="post"
+          target="_top"
+          style="
+            display: inline-grid;
+            justify-items: center;
+            align-content: start;
+            gap: 0.5rem;
+          "
+        >
+          <input class="pp-GUEDM9BNX6DXU" type="submit" value="Comprar ahora" />
+          <img src=https://www.paypalobjects.com/images/Debit_Credit_APM.svg
+          alt="cards" />
+          <section>
+            Con la tecnología de
+            <img
+              src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+              alt="paypal"
+              style="height: 0.875rem; vertical-align: middle"
+            />
+          </section>
+        </form> -->
+
+        <div id="paypal-container-GUEDM9BNX6DXU" class="w-full mt-5"></div>
+        <div id="paypal-button-container" class="w-full mt-5"></div>
+        <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineEmits, onMounted, ref } from "vue";
+import { defineEmits, onBeforeMount, onMounted, ref } from "vue";
 import { IProduct } from "../../../../core/Interfaces/Product.interface";
 import { useCartStore } from "../../../../core/store/shoping-store/cart.store";
+import { loadScript } from "@paypal/paypal-js";
 
 const cartStore = useCartStore();
-const quantity = ref<number>(1);
 const emits = defineEmits<{
   (e: "hidden-cart-shopping", value: boolean): void;
 }>();
+const listProducts = ref<IProduct[]>([]);
+//const showPaymentMethod = ref(false);
+
+const paypalLoaded = ref(false);
+const errorMessage = ref("");
+// Aqui viene el id de su negocio de paypal 👇👇👇👇
+const client_paypal_id =
+  "AYSwL3ppsqNF8NHFqeWXJ96A7Te_UUv50l310qKtXm4bSzoCcntBymWsUYntF5z14Kcm_NSt8fzRhhHz";
+onMounted(() => {
+  listProducts.value = cartStore.cartProducts;
+});
+
+onBeforeMount(() => {
+  loadScript({ clientId: client_paypal_id }).then((paypal) => {
+    if (paypal && paypal.Buttons) {
+      paypal
+        .Buttons({
+          createOrder: createOrder,
+          onApprove: onApprove,
+        })
+        .render("#paypal-button-container");
+    }
+  });
+});
+
+const createOrder = (data: any, actions: any) => {
+  return actions.order.create({
+    purchase_units: [
+      {
+        description: "Orden de tratados evangelisticos ",
+        amount: {
+          value: (cartStore.cartTotalPrice / 3900 + 2.4)
+            .toPrecision(3)
+            .toString(),
+        },
+      },
+    ],
+  });
+};
+
+const onApprove = (data: any, actions: any) => {
+  console.log("onApprove");
+  return actions.order.capture().then(function (details: any) {
+    console.log(details);
+  });
+};
 
 const hiddenShoppingCart = () => {
   emits("hidden-cart-shopping", false);
 };
-
-const listProducts = ref<IProduct[]>([]);
-
-onMounted(() => {
-  console.log(cartStore.cartProducts, cartStore.cartTotalPrice);
-  listProducts.value = cartStore.cartProducts;
-});
 
 const removeProduct = (product: IProduct) => {
   cartStore.removeProductFromCart(product);
@@ -114,11 +205,25 @@ const updateQuantityProduct = (e: Event, product: IProduct) => {
   const inputValue = (e.target as HTMLInputElement).value;
 
   if (inputValue === "") {
-    quantity.value = 1;
+    product.quantity = 1;
   }
 
   product.quantity = parseInt(inputValue);
 
   cartStore.updateQuantityProduct(product);
 };
+
+const pipeCurrency = (value: number) => {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+  }).format(value);
+};
 </script>
+
+<style>
+#paypal-button-container {
+  width: 100%;
+  max-width: 500px;
+}
+</style>

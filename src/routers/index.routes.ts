@@ -16,6 +16,7 @@ const routes: any = [
     name: "store",
     component: () => import("../modules/store/pages/store.page.vue"),
   },
+
   {
     path: "/:pathMatch(.*)*",
     name: "404-page",

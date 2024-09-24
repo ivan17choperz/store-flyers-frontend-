@@ -11,6 +11,12 @@
 <script setup lang="ts">
 import navbarComponent from "./shared/components/navbar/navbar.component.vue";
 import footerComponent from "./shared/components/footer/footer.component.vue";
+import { onMounted, ref } from "vue";
+
+const paypalLoaded = ref(false);
+const errorMessage = ref("");
+
+onMounted(async () => {});
 </script>
 
 <style scoped>
